@@ -14,14 +14,49 @@ QGConfig
 
 from dataclasses import dataclass, field
 from typing import Optional, Any, Dict, List
+from unicodedata import name
 
 @dataclass
-class PythiaConfig:
+class GeneralConfig:
+    """
+    General configuration for the qgpy package.
+
+    Attributes
+    ----------
+    """
+
+    name            : str            = field(default = "qgpy")
+    run_dir         : str            = field(default = "")
+
+@dataclass
+class GeneratorConfig:
+    """
+    Base class for the event generation configuration.
+
+    Attributes
+    ----------
+    log_level : str
+        The logging level for the event generation.
+    """
+
+    log_level       : str            = field(default = "INFO")
+    nevents_per_job : int            = field(default = 5000)
+    reco_jet_pt_min : float          = field(default = 10.0)
+
+
+@dataclass
+class PythiaConfig(GeneratorConfig):
     """
     Configuration of the Pythia event generator.
 
     Attributes
     ----------
+    executable : str
+        The path to the generation code executable.
+        The path is relative to the main qgpy package directory.
+    function : str
+        The name of the function to be called for the event generation.
+        There must be a function with this name in the qgpy.generate module.
     seed : int
         The random seed to be used for the Pythia 8 event generator.
     pTHatMin : List[float]
@@ -30,11 +65,19 @@ class PythiaConfig:
     pTHatMax : List[float]
         List of the maximum pT hat to be used for the Pythia 8 event generator.
         Each value pairs with the corresponding pTHatMin value, forming a range for the pT hat.
+    njobs : List[int]
+        The number of jobs to be submitted for the Pythia 8 event generation.
+        Each value pairs with the corresponding pTHatMin and pTHatMax values.
+        Thus, njobs[i] * nevents_per_job will be the total number of events generated
+        for the i-th pT hat range.
     """
 
-    seed      : int            = field(default = 0)
-    pTHatMin  : List[float]    = field(default_factory = lambda: [1000.0, 1500.0])
-    pTHatMax  : List[float]    = field(default_factory = lambda: [1500.0, 2000.0])
+    executable : str            = field(default = "cpp/generate")
+    function   : str            = field(default = "generate_pythia")
+    seed       : int            = field(default = 0)
+    pTHatMin   : List[float]    = field(default_factory = lambda: [1000.0, 1500.0])
+    pTHatMax   : List[float]    = field(default_factory = lambda: [1500.0, 2000.0])
+    njobs      : List[int]      = field(default_factory = lambda: [1, 1])
 
 @dataclass
 class SchedulerConfig:
@@ -170,6 +213,7 @@ class QGConfig:
     A dataclass representing the expected configuration schema.
     """
 
+    general                : GeneralConfig                = field(default_factory = GeneralConfig)
     pythia                 : PythiaConfig                 = field(default_factory = PythiaConfig)
     submit                 : SubmitConfig                 = field(default_factory = SubmitConfig)
     log                    : LogConfig                    = field(default_factory = LogConfig)

@@ -63,7 +63,7 @@ int main(int argc, char* argv[]) {
         ("phmin,pTHatMin", "Minimum pT hat for hard processes", cxxopts::value<double>()->default_value("1000."))
         ("phmax,pTHatMax", "Maximum pT hat for hard processes", cxxopts::value<double>()->default_value("1500."))
         ("o,output", "Output file name", cxxopts::value<std::string>()->default_value("labels"))
-        ("j,jetPtMin", "Minimum pT for jets", cxxopts::value<double>()->default_value("5.0"))
+        ("r,recoJetPtMin", "Minimum pT for jets", cxxopts::value<double>()->default_value("5.0"))
         ("h,help", "Print usage")
     ;
 
@@ -79,7 +79,7 @@ int main(int argc, char* argv[]) {
     int seed = result["seed"].as<int>();
     double pTHatMin = result["pTHatMin"].as<double>();
     std::string output = result["output"].as<std::string>();
-    double jetPtMin = result["jetPtMin"].as<double>();
+    double recoJetPtMin = result["recoJetPtMin"].as<double>();
 
     // Print the parsed options
     std::cout << "Parsed options:" << std::endl;
@@ -88,7 +88,7 @@ int main(int argc, char* argv[]) {
     std::cout << "  Seed: " << seed << std::endl;
     std::cout << "  pTHatMin: " << pTHatMin << std::endl;
     std::cout << "  Output file: " << output << std::endl;
-    std::cout << "  Jet pT min: " << jetPtMin << std::endl;
+    std::cout << "  Jet pT min: " << recoJetPtMin << std::endl;
 
     // Create Pythia instance
     Pythia pythia;
@@ -178,7 +178,7 @@ int main(int argc, char* argv[]) {
 
         for (unsigned int ijet = 0; ijet < IFN_jets.size(); ijet++) {
             const auto& jet = IFN_jets[ijet];
-            if (jet.pt() < jetPtMin) continue;
+            if (jet.pt() < recoJetPtMin) continue;
 
             int ifn_label = get_flavour(FlavHistory::current_flavour_of(jet));
 
