@@ -1,1 +1,5 @@
 cpp/generate
+*.pyc
+/venv/
+/outputs/
+/src/qgpy.egg-info/
