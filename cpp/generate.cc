@@ -60,8 +60,8 @@ int main(int argc, char* argv[]) {
         ("c,compare", "Create a second jet collection and compare it with the default one", cxxopts::value<bool>()->default_value("false"))
         ("n,nevents", "Number of events to generate", cxxopts::value<int>()->default_value("10"))
         ("s,seed", "Random seed to initialize Pythia with", cxxopts::value<int>()->default_value("0"))
-        ("phmin,pTHatMin", "Minimum pT hat for hard processes", cxxopts::value<double>()->default_value("1000."))
-        ("phmax,pTHatMax", "Maximum pT hat for hard processes", cxxopts::value<double>()->default_value("1500."))
+        ("phmin,pTHatMin", "Minimum pT hat for hard processes", cxxopts::value<double>()->default_value("-1."))
+        ("phmax,pTHatMax", "Maximum pT hat for hard processes", cxxopts::value<double>()->default_value("-1."))
         ("o,output", "Output file name", cxxopts::value<std::string>()->default_value("labels"))
         ("r,recoJetPtMin", "Minimum pT for jets", cxxopts::value<double>()->default_value("5.0"))
         ("h,help", "Print usage")
@@ -78,6 +78,7 @@ int main(int argc, char* argv[]) {
     int nevents = result["nevents"].as<int>();
     int seed = result["seed"].as<int>();
     double pTHatMin = result["pTHatMin"].as<double>();
+    double pTHatMax = result["pTHatMax"].as<double>();
     std::string output = result["output"].as<std::string>();
     double recoJetPtMin = result["recoJetPtMin"].as<double>();
 
@@ -87,6 +88,7 @@ int main(int argc, char* argv[]) {
     std::cout << "  Number of events: " << nevents << std::endl;
     std::cout << "  Seed: " << seed << std::endl;
     std::cout << "  pTHatMin: " << pTHatMin << std::endl;
+    std::cout << "  pTHatMax: " << pTHatMax << std::endl;
     std::cout << "  Output file: " << output << std::endl;
     std::cout << "  Jet pT min: " << recoJetPtMin << std::endl;
 
@@ -107,7 +109,12 @@ int main(int argc, char* argv[]) {
 
     // Enable hard QCD processes
     pythia.readString("HardQCD:all = on");
-    pythia.readString("PhaseSpace:pTHatMin = " + std::to_string(pTHatMin));
+    if (pTHatMin > 0) {
+        pythia.readString("PhaseSpace:pTHatMin = " + std::to_string(pTHatMin));
+    }
+    if (pTHatMax > 0) {
+        pythia.readString("PhaseSpace:pTHatMax = " + std::to_string(pTHatMax));
+    }
 
     // Turn ON hadronization and parton-level evolution
     pythia.readString("PartonLevel:all = on");

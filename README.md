@@ -35,3 +35,19 @@ python -m venv venv
 source venv/bin/activate
 pip install -e .
 ```
+
+## On the next startup
+Make sure to activate the LCG and the virtual environments again:
+```bash
+cd <path_to_the_qgpy_directory>
+source setup.sh
+source venv/bin/activate
+```
+
+## After editing the cpp/generate.cc code
+Make sure to recompile the C++ code:
+```bash
+cd cpp
+g++ generate.cc -o generate -L/cvmfs/sft.cern.ch/lcg/views/LCG_108/x86_64-el9-gcc15-opt/lib -lpythia8 -lfastjet -L/cvmfs/sft.cern.ch/lcg/views/LCG_108/x86_64-el9-gcc15-opt/lib64/ -lHepMC3 -L../IFNPlugin/ -lIFNPlugin -I../cxxopts/include/
+cd ..
+```

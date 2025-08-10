@@ -1,11 +1,13 @@
-import qgpy.generate
-from qgpy.configuration import SchedulerConfig
+import shutil
+import qgpy
+import qgpy.utils, qgpy.generate
+from qgpy.configuration import SchedulerConfig, GeneratorConfig
 import concurrent.futures
 import pickle
 from typing import Dict, Any, List
 import os
 
-def local(cfg: SchedulerConfig, jobs: List[Dict[str, Any]], function: str):
+def local(cfg: SchedulerConfig, jobs: List[Dict[str, Any]]):
     """
     Submit the fit jobs in parallel on the local machine.
 
@@ -24,7 +26,7 @@ def local(cfg: SchedulerConfig, jobs: List[Dict[str, Any]], function: str):
 
     results = []
     with concurrent.futures.ProcessPoolExecutor(max_workers = cfg.max_jobs) as executor:
-        futures = [executor.submit(run_job, job) for job in jobs]
+        futures = [executor.submit(run_job, **job) for job in jobs]
         results = []
         for future in futures:
             try:
@@ -56,35 +58,35 @@ def slurm(cfg: SchedulerConfig, jobs: List[Dict[str, Any]]):
     for job in jobs:
 
         # Pickle the job configuration.
-        job_file_name = f"{job['fit_out_dir']}/job.pkl"
+        job_file_name = f"{job['job_dir']}/job.pkl"
         with open(job_file_name, "wb") as f:
             pickle.dump(job, f)
 
         # Prepare the job submission bash script.
-        bash_script_name = f"{job['fit_out_dir']}/job.sh"
+        bash_script_name = f"{job['job_dir']}/job.sh"
         with open(bash_script_name, "w") as f:
             f.write("#!/bin/bash\n")
             f.write(f"#SBATCH --partition={cfg.partition}\n")
-            f.write(f"#SBATCH --job-name={histogram_name('fit', job['variables_order'], job['bin'])}\n")
-            f.write(f"#SBATCH --output={job['fit_out_dir']}/slurm-%j.out\n")
-            f.write(f"#SBATCH --error={job['fit_out_dir']}/slurm-%j.err\n")
+            f.write(f"#SBATCH --job-name={job['job_name']}\n")
+            f.write(f"#SBATCH --output={job['job_dir']}/slurm-%j.out\n")
+            f.write(f"#SBATCH --error={job['job_dir']}/slurm-%j.err\n")
             f.write(f"#SBATCH --ntasks={cfg.ntasks}\n")
             f.write(f"#SBATCH --cpus-per-task={cfg.cpus_per_task}\n")
             f.write(f"#SBATCH --time={cfg.time}\n")
             f.write(f"cd {os.getcwd()}\n")
             f.write("source venv/bin/activate\n")
-            f.write(f"python {job['fit_out_dir']}/job.py\n")
+            f.write(f"python {job['job_dir']}/job.py\n")
 
         # Prepare the job submission python script.
         # It retrieves the job configuration from the pickled file and runs the run_job function.
         # This script is executed by the bash script.
-        python_script_name = f"{job['fit_out_dir']}/job.py"
+        python_script_name = f"{job['job_dir']}/job.py"
         with open(python_script_name, "w") as f:
             f.write("import pickle\n")
             f.write("from ufftools.submit import run_job\n")
             f.write(f"with open('{job_file_name}', 'rb') as f:\n")
             f.write("    job = pickle.load(f)\n")
-            f.write("run_job(job)\n")
+            f.write("run_job(**job)\n")
 
         # Run the slurm job submission command.
         os.system(f"{cfg.command} {bash_script_name}")
@@ -120,31 +122,31 @@ def htcondor(cfg: SchedulerConfig, jobs: List[Dict[str, Any]]):
     for job in jobs:
 
         # Pickle the job configuration.
-        job_file_name = f"{job['fit_out_dir']}/job.pkl"
+        job_file_name = f"{job['job_dir']}/job.pkl"
         with open(job_file_name, "wb") as f:
             pickle.dump(job, f)
 
         # Prepare the job submission bash script.
-        bash_script_name = f"{job['fit_out_dir']}/job.sh"
+        bash_script_name = f"{job['job_dir']}/job.sh"
         with open(bash_script_name, "w") as f:
             f.write("#!/bin/bash\n")
             f.write(f"cd {os.getcwd()}\n")
             f.write("source venv/bin/activate\n")
-            f.write(f"python {job['fit_out_dir']}/job.py\n")
+            f.write(f"python {job['job_dir']}/job.py\n")
 
         # Prepare the job submission python script.
         # It retrieves the job configuration from the pickled file and runs the run_job function.
         # This script is executed by the bash script.
-        python_script_name = f"{job['fit_out_dir']}/job.py"
+        python_script_name = f"{job['job_dir']}/job.py"
         with open(python_script_name, "w") as f:
             f.write("import pickle\n")
             f.write("from ufftools.submit import run_job\n")
             f.write(f"with open('{job_file_name}', 'rb') as f:\n")
             f.write("    job = pickle.load(f)\n")
-            f.write("run_job(job)\n")
+            f.write("run_job(**job)\n")
 
         # Create a submission file "job.sub"
-        sub_file_name = f"{job['fit_out_dir']}/job.sub"
+        sub_file_name = f"{job['job_dir']}/job.sub"
         rel_dir_name = os.path.relpath(bash_script_name, start=os.getcwd())
         with open(sub_file_name, "w") as f:
             f.write(f"executable = {rel_dir_name}\n")
@@ -176,7 +178,14 @@ def htcondor(cfg: SchedulerConfig, jobs: List[Dict[str, Any]]):
     # Return.
     return
 
-def run_job(job: Dict[str, Any]):
+def run_job(
+        job_name: str,
+        job_dir: str,
+        target_dir: str,
+        cfg: GeneratorConfig,
+        slice_min: float = -1,
+        slice_max: float = -1,
+        ) -> None:
     """
     Run the job with the given configuration.
 
@@ -195,43 +204,39 @@ def run_job(job: Dict[str, Any]):
     # # Avoid X server issues in non-GUI environments.
     # matplotlib.use('Agg')
 
-    
-    # Save the fit input to a pickle file.
-    with open(f"{job['run_dir']}/fit_input.pkl", "wb") as f:
-        pickle.dump(fit_input, f)
+    # Create the job_dir directory.
+    os.makedirs(job_dir, exist_ok=True)
 
-    # Perform the fit.
-    if job['backend'] == "zfit":
-        fit_result, post_fit_hists = fit_with_zfit(hists = fit_input, templates = job['templates'], sr = job['sr'])
-    elif job['backend'] == "cabinetry":
-        fit_result, post_fit_hists = fit_with_cabinetry(
-            hists           = fit_input,
-            templates       = job['templates'],
-            nf_bounds       = job['nf_bounds'],
-            sr              = job['sr'],
-            disc_var_label  = job['disc_var_label'],
-            outdir          = job['fit_out_dir'],
-        )
+    # Create the job logger.
+    logger = qgpy.utils.create_logger(job_name, outdir = job_dir)
+    logger.info("Beginning of the run_job function...")
 
-    # Draw the post-fit histograms.
-    draw_fit(
-        hists           = post_fit_hists,
-        templates       = job['templates'],
-        sr              = job['sr'],
-        bin             = job['bin'],
-        variables_order = job['variables_order'],
-        variables_info  = job['variables_info'],
-        templates_scale = 1,
-        opts            = job['plot_opts'],
-        subtext         = job['plot_opts'].subtext_postfit,
-        plot_name       = f"{job['fit_out_dir']}/fit_output",
+    # # Save the generator config and the slice min/max values in a dictionary.
+    # with open(f"{job_dir}/job_config.pkl", "wb") as f:
+    #     pickle.dump({
+    #         "generator_config": cfg,
+    #         "slice_min": slice_min,
+    #         "slice_max": slice_max
+    #     }, f)
+
+    # Get the generate function to call.
+    gen_func = getattr(qgpy.generate, cfg.function)
+
+    # Call the generate function.
+    gen_func(
+        outdir=job_dir,
+        cfg=cfg,
+        slice_min=slice_min,
+        slice_max=slice_max
     )
-    
-    # Save the fit output to pickle files.
-    with open(f"{job['fit_out_dir']}/fit_result.pkl", "wb") as f:
-        pickle.dump(fit_result, f)
-    with open(f"{job['fit_out_dir']}/post_fit_hists.pkl", "wb") as f:
-        pickle.dump(post_fit_hists, f)
+
+
+    # At the end of the job, copy the directory job_dir to the target_dir,
+    # unless job_dir is subdirectory of target_dir.
+    # Note: copy the whole directory, not just the contents.
+    if not os.path.commonpath([os.path.abspath(job_dir), os.path.abspath(target_dir)]) == os.path.abspath(target_dir):
+        dest = os.path.join(target_dir, os.path.basename(job_dir))
+        shutil.copytree(job_dir, dest, dirs_exist_ok=True)
 
     # Return.
     return

@@ -1,3 +1,7 @@
 defaults:
   - base_config
   - _self_
+
+general:
+  run_dir: "/scratch/ucjf-atlas/plesv6am/qg/data/"
+  

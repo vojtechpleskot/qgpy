@@ -23,10 +23,20 @@ class GeneralConfig:
 
     Attributes
     ----------
+    name : str
+        The name of the experiment.
+    run_dir : str
+        The directory where the jobs will create their output directories and run.
+        If not specified, the hydra output directory will be used.
+        If specified, each job directory will be copied to the hydra output directory at the end of the run.
+    generator : str
+        The name of the event generator configuration to be used.
+        It must match a name of one QGConfig attribute.
     """
 
     name            : str            = field(default = "qgpy")
     run_dir         : str            = field(default = "")
+    generator       : str            = field(default = "pythia")
 
 @dataclass
 class GeneratorConfig:
@@ -59,25 +69,35 @@ class PythiaConfig(GeneratorConfig):
         There must be a function with this name in the qgpy.generate module.
     seed : int
         The random seed to be used for the Pythia 8 event generator.
-    pTHatMin : List[float]
-        List of the minimum pT hat to be used for the Pythia 8 event generator.
-        Each value pairs with the corresponding pTHatMax value, forming a range for the pT hat.
-    pTHatMax : List[float]
-        List of the maximum pT hat to be used for the Pythia 8 event generator.
-        Each value pairs with the corresponding pTHatMin value, forming a range for the pT hat.
-    njobs : List[int]
-        The number of jobs to be submitted for the Pythia 8 event generation.
-        Each value pairs with the corresponding pTHatMin and pTHatMax values.
-        Thus, njobs[i] * nevents_per_job will be the total number of events generated
-        for the i-th pT hat range.
     """
 
     executable : str            = field(default = "cpp/generate")
     function   : str            = field(default = "generate_pythia")
     seed       : int            = field(default = 0)
-    pTHatMin   : List[float]    = field(default_factory = lambda: [1000.0, 1500.0])
-    pTHatMax   : List[float]    = field(default_factory = lambda: [1500.0, 2000.0])
-    njobs      : List[int]      = field(default_factory = lambda: [1, 1])
+
+@dataclass
+class SlicingConfig:
+    """
+    Configuration for the MC generation slicing.
+
+    Attributes
+    ----------
+    slices_min : List[float]
+        List of the minima of a slicing variable.
+        E.g. the pT hat variable is used for the Pythia 8 event generator.
+        Each value pairs with the corresponding slices_max value, forming a range for the slicing variable.
+    slices_max : List[float]
+        List of the maxima of a slicing variable.
+    njobs : List[int]
+        The number of jobs to be submitted for the given slicing variable range.
+        Each value pairs with the corresponding slices_min and slices_max values.
+        Thus, njobs[i] * nevents_per_job will be the total number of events generated
+        for the i-th slicing variable range.
+    """
+
+    slices_min   : List[float]    = field(default_factory = lambda: [1000.0, 1500.0])
+    slices_max   : List[float]    = field(default_factory = lambda: [1500.0, 2000.0])
+    njobs        : List[int]      = field(default_factory = lambda: [1, 1])
 
 @dataclass
 class SchedulerConfig:
@@ -102,7 +122,7 @@ class LocalSchedulerConfig(SchedulerConfig):
         If set to -1, then all jobs are submitted at once.
     """
 
-    max_jobs   : int            = field(default = -1) # User for local_parallel submission.
+    max_jobs   : int            = field(default = 1)
 
 @dataclass
 class SlurmSchedulerConfig(SchedulerConfig):
@@ -215,5 +235,6 @@ class QGConfig:
 
     general                : GeneralConfig                = field(default_factory = GeneralConfig)
     pythia                 : PythiaConfig                 = field(default_factory = PythiaConfig)
+    slicing                : SlicingConfig                = field(default_factory = SlicingConfig)
     submit                 : SubmitConfig                 = field(default_factory = SubmitConfig)
     log                    : LogConfig                    = field(default_factory = LogConfig)
