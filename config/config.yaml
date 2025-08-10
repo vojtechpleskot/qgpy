@@ -4,4 +4,10 @@ defaults:
 
 general:
   run_dir: "/scratch/ucjf-atlas/plesv6am/qg/data/"
-  
+
+pythia:
+  nevents_per_job: 10
+
+submit:
+  local:
+    max_jobs: 2

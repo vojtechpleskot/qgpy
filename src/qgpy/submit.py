@@ -183,6 +183,7 @@ def run_job(
         job_dir: str,
         target_dir: str,
         cfg: GeneratorConfig,
+        delphes_card: str,
         slice_min: float = -1,
         slice_max: float = -1,
         ) -> None:
@@ -220,9 +221,11 @@ def run_job(
     #     }, f)
 
     # Get the generate function to call.
+    logger.info(f"Getting the {cfg.function} function from the qgpy.generate module...")
     gen_func = getattr(qgpy.generate, cfg.function)
 
     # Call the generate function.
+    logger.info(f"Calling the {cfg.function} function...")
     gen_func(
         outdir=job_dir,
         cfg=cfg,
@@ -230,6 +233,9 @@ def run_job(
         slice_max=slice_max
     )
 
+    # Run Delphes on the hepmc3 file.
+    logger.info(f"Running Delphes on the generated HepMC3 file using the {target_dir}/../../../{delphes_card} card.")
+    os.system(f'DelphesHepMC3 {target_dir}/../../../{delphes_card} {job_dir}/delphes.root {job_dir}/generate.hepmc3')
 
     # At the end of the job, copy the directory job_dir to the target_dir,
     # unless job_dir is subdirectory of target_dir.

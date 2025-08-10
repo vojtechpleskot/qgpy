@@ -37,6 +37,7 @@ class GeneralConfig:
     name            : str            = field(default = "qgpy")
     run_dir         : str            = field(default = "")
     generator       : str            = field(default = "pythia")
+    delphes_card    : str            = field(default = "config/delphes_card_ATLAS.tcl")
 
 @dataclass
 class GeneratorConfig:

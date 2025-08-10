@@ -101,6 +101,7 @@ def main(cfg) -> None:
                 'job_dir': f"{run_dir}/{job_name}",
                 'target_dir': output_dir,
                 'cfg': getattr(cfg, cfg.general.generator),
+                'delphes_card': cfg.general.delphes_card,
                 'slice_min': slice_min,
                 'slice_max': slice_max,
             }
