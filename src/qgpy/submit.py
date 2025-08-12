@@ -1,6 +1,6 @@
 import shutil
 import qgpy
-import qgpy.utils, qgpy.generate
+import qgpy.utils, qgpy.generate, qgpy.convert
 from qgpy.configuration import SchedulerConfig, GeneratorConfig
 import concurrent.futures
 import pickle
@@ -74,7 +74,10 @@ def slurm(cfg: SchedulerConfig, jobs: List[Dict[str, Any]]):
             f.write(f"#SBATCH --cpus-per-task={cfg.cpus_per_task}\n")
             f.write(f"#SBATCH --time={cfg.time}\n")
             f.write(f"cd {os.getcwd()}\n")
+            f.write("source setup.sh\n")
+            f.write("unset PYTHONPATH\n")
             f.write("source venv/bin/activate\n")
+            f.write(f"cd {job['job_dir']}\n")
             f.write(f"python {job['job_dir']}/job.py\n")
 
         # Prepare the job submission python script.
@@ -83,7 +86,7 @@ def slurm(cfg: SchedulerConfig, jobs: List[Dict[str, Any]]):
         python_script_name = f"{job['job_dir']}/job.py"
         with open(python_script_name, "w") as f:
             f.write("import pickle\n")
-            f.write("from ufftools.submit import run_job\n")
+            f.write("from qgpy.submit import run_job\n")
             f.write(f"with open('{job_file_name}', 'rb') as f:\n")
             f.write("    job = pickle.load(f)\n")
             f.write("run_job(**job)\n")
@@ -140,7 +143,7 @@ def htcondor(cfg: SchedulerConfig, jobs: List[Dict[str, Any]]):
         python_script_name = f"{job['job_dir']}/job.py"
         with open(python_script_name, "w") as f:
             f.write("import pickle\n")
-            f.write("from ufftools.submit import run_job\n")
+            f.write("from qgpy.submit import run_job\n")
             f.write(f"with open('{job_file_name}', 'rb') as f:\n")
             f.write("    job = pickle.load(f)\n")
             f.write("run_job(**job)\n")
@@ -205,9 +208,6 @@ def run_job(
     # # Avoid X server issues in non-GUI environments.
     # matplotlib.use('Agg')
 
-    # Create the job_dir directory.
-    os.makedirs(job_dir, exist_ok=True)
-
     # Create the job logger.
     logger = qgpy.utils.create_logger(job_name, outdir = job_dir)
     logger.info("Beginning of the run_job function...")
@@ -234,8 +234,23 @@ def run_job(
     )
 
     # Run Delphes on the hepmc3 file.
-    logger.info(f"Running Delphes on the generated HepMC3 file using the {target_dir}/../../../{delphes_card} card.")
-    os.system(f'DelphesHepMC3 {target_dir}/../../../{delphes_card} {job_dir}/delphes.root {job_dir}/generate.hepmc3')
+    package_dir = os.path.dirname(os.path.abspath(qgpy.__file__))
+    logger.info(f"Running Delphes on the generated HepMC3 file using the {package_dir}/../../{delphes_card} card.")
+    os.system(f'DelphesHepMC3 {package_dir}/../../{delphes_card} {job_dir}/delphes.root {job_dir}/generate.hepmc3')
+
+    # Convert the Delphes root format to the JIDENN accepted root format.
+    qgpy.convert.delphes_to_jidenn(
+        delphes_file=f"{job_dir}/delphes.root",
+        jidenn_file=f"{job_dir}/jidenn_input.root"
+    )
+
+
+
+
+
+
+
+
 
     # At the end of the job, copy the directory job_dir to the target_dir,
     # unless job_dir is subdirectory of target_dir.

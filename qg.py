@@ -70,11 +70,6 @@ def main(cfg) -> None:
     # become instances of your dataclasses.
     cfg = OmegaConf.to_object(cfg)
 
-    print(f"Pythia configuration (unresolved): {cfg}")
-    print(type(cfg))
-    p = dataclasses.asdict(cfg)
-    logger.info(f"Pythia configuration: {p}")
-
     # Get the output directory from the Hydra runtime configuration.
     # This is the directory where all the outputs will be aggregated in the end.
     output_dir = hydra.core.hydra_config.HydraConfig.get().runtime.output_dir
@@ -106,6 +101,9 @@ def main(cfg) -> None:
                 'slice_max': slice_max,
             }
             jobs.append(job)
+
+            # Create the job_dir directory.
+            os.makedirs(job['job_dir'], exist_ok = True)
 
     # Submit the jobs.
     if jobs:

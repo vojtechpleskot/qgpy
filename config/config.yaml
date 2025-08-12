@@ -6,8 +6,21 @@ general:
   run_dir: "/scratch/ucjf-atlas/plesv6am/qg/data/"
 
 pythia:
-  nevents_per_job: 10
+  nevents_per_job: 5000
+
+slicing:
+  slices_min: [200, 500,  1000, 1500, 2000]
+  slices_max: [500, 1000, 1500, 2000, 2500]
+  njobs: [100, 100, 100, 100, 100]
 
 submit:
+  scheduler: slurm
   local:
     max_jobs: 2
+  slurm:
+    command       : sbatch
+    partition     : ucjf
+    ntasks        : 1
+    cpus_per_task : 1
+    mem           : 2G
+    time          : 01:00:00

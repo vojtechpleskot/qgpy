@@ -12,7 +12,8 @@ generate_pythia(Dict[str, Any]) -> None
 
 import os
 from typing import Dict, Any
-from qgpy import utils
+import qgpy
+import qgpy.utils
 from qgpy.configuration import GeneratorConfig
 
 def generate_pythia(
@@ -42,11 +43,12 @@ def generate_pythia(
     os.makedirs(outdir, exist_ok=True)
     
     # Create a logger instance.
-    logger = utils.create_logger('generate', outdir = outdir, level = cfg.log_level)
+    logger = qgpy.utils.create_logger('generate', outdir = outdir, level = cfg.log_level)
     logger.info("Starting the event generation...")
 
     # Prepare the command to run Pythia.
-    command = f"{cfg.executable} --nevents={cfg.nevents_per_job} --seed={cfg.seed} " \
+    package_dir = os.path.dirname(os.path.abspath(qgpy.__file__))
+    command = f"{package_dir}/../../{cfg.executable} --nevents={cfg.nevents_per_job} --seed={cfg.seed} " \
                 f"--pTHatMin={slice_min} --pTHatMax={slice_max} " \
                 f"--output={outdir}/generate --recoJetPtMin={cfg.reco_jet_pt_min}"
 

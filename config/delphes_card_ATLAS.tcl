@@ -599,6 +599,7 @@ module FastJetFinder GenJetFinder {
   set ParameterR 0.4
 
   set JetPTMin 20.0
+
 }
 
 
@@ -629,6 +630,12 @@ module FastJetFinder FastJetFinder {
 
   set JetPTMin 20.0
   set StoreConstituents true
+
+  # Configuration for N-subjettiness
+  set ComputeNsubjettiness 1
+  set NsubjettinessN 5
+  set NsubjettinessBeta 1.0  
+    
 }
 
 ##################
