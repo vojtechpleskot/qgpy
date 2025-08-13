@@ -239,10 +239,13 @@ def run_job(
     os.system(f'DelphesHepMC3 {package_dir}/../../{delphes_card} {job_dir}/delphes.root {job_dir}/generate.hepmc3')
 
     # Convert the Delphes root format to the JIDENN accepted root format.
-    qgpy.convert.delphes_to_jidenn(
+    qgpy.convert.delphes_to_jidenn_root(
         delphes_file=f"{job_dir}/delphes.root",
         jidenn_file=f"{job_dir}/jidenn_input.root"
     )
+
+    # Read the metadata from the text file created by the generate function.
+    metadata = qgpy.convert(f"{job_dir}/generate_metadata.txt")
 
 
 

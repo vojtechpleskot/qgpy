@@ -220,6 +220,22 @@ int main(int argc, char* argv[]) {
     std::cout << "Processed " << nevents << " events." << std::endl;
     std::cout << "Found " << counter << " jets with the atlas label different from the IFN label, from " << n_jets << " checked jets." << std::endl;
 
+    pythia.stat();
+    // Access the Info object and retrieve the cross section.
+    // Save the metadata to a file.
+    ofstream metadata(output + "_metadata.txt");
+    metadata << "XS [mb]: " << pythia.info.sigmaGen() << "\n";
+    metadata << "XS_unc [mb]: " << pythia.info.sigmaErr() << "\n";
+    metadata << "sumw: " << pythia.info.weightSum() << "\n";
+    metadata << "nTried: " << pythia.info.nTried() << "\n";
+    metadata << "nSelected: " << pythia.info.nSelected() << "\n";
+    metadata << "nAccepted: " << pythia.info.nAccepted() << "\n";
+    metadata << "nevents: " << nevents << "\n";
+    metadata << "pTHatMin: " << pTHatMin << "\n";
+    metadata << "pTHatMax: " << pTHatMax << "\n";    
+    metadata.close();
+
+
     outfile.close();
     writer.close();
     pythia.stat();

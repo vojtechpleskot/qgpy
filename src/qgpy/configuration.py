@@ -51,7 +51,7 @@ class GeneratorConfig:
     """
 
     log_level       : str            = field(default = "INFO")
-    nevents_per_job : int            = field(default = 5000)
+    nevents_per_job : int            = field(default = 50)
     reco_jet_pt_min : float          = field(default = 10.0)
 
 
@@ -96,9 +96,9 @@ class SlicingConfig:
         for the i-th slicing variable range.
     """
 
-    slices_min   : List[float]    = field(default_factory = lambda: [1000.0, 1500.0])
-    slices_max   : List[float]    = field(default_factory = lambda: [1500.0, 2000.0])
-    njobs        : List[int]      = field(default_factory = lambda: [1, 1])
+    slices_min   : List[float]    = field(default_factory = lambda: [1000.0])
+    slices_max   : List[float]    = field(default_factory = lambda: [1500.0])
+    njobs        : List[int]      = field(default_factory = lambda: [1])
 
 @dataclass
 class SchedulerConfig:
