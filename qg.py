@@ -31,6 +31,7 @@ Change the hydra output directory:
 $ python qg.py hydra.run.dir=outputs/2025-08-08/09-31-56
 """
 
+import shutil
 import hydra
 import qgpy
 import qgpy.submit
@@ -99,8 +100,13 @@ def main(cfg) -> None:
                 'delphes_card': cfg.general.delphes_card,
                 'slice_min': slice_min,
                 'slice_max': slice_max,
+                'copy_output_on_exit': cfg.general.copy_output_on_exit,
             }
             jobs.append(job)
+
+            # Erase the job directory if it already exists and the deletion is requested.
+            if cfg.general.erase_existing and os.path.exists(job['job_dir']):
+                shutil.rmtree(job['job_dir'])
 
             # Create the job_dir directory.
             os.makedirs(job['job_dir'], exist_ok = True)

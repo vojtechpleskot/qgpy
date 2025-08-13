@@ -32,12 +32,18 @@ class GeneralConfig:
     generator : str
         The name of the event generator configuration to be used.
         It must match a name of one QGConfig attribute.
+    erase_existing : bool
+        Whether to erase the existing output directory before running the job.
+    copy_output_on_exit : bool
+        Whether to copy the job directory to the hydra output directory at the end of the run.
     """
 
-    name            : str            = field(default = "qgpy")
-    run_dir         : str            = field(default = "")
-    generator       : str            = field(default = "pythia")
-    delphes_card    : str            = field(default = "config/delphes_card_ATLAS.tcl")
+    name                   : str            = field(default = "qgpy")
+    run_dir                : str            = field(default = "")
+    generator              : str            = field(default = "pythia")
+    delphes_card           : str            = field(default = "config/delphes_card_ATLAS.tcl")
+    erase_existing         : bool           = field(default = False)
+    copy_output_on_exit    : bool           = field(default = False)
 
 @dataclass
 class GeneratorConfig:

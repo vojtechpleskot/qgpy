@@ -44,22 +44,47 @@ def generate_pythia(
     
     # Create a logger instance.
     logger = qgpy.utils.create_logger('generate', outdir = outdir, level = cfg.log_level)
-    logger.info("Starting the event generation...")
+    logger.info("At the beginning of the generate_pythia function.")
 
-    # Prepare the command to run Pythia.
-    package_dir = os.path.dirname(os.path.abspath(qgpy.__file__))
-    command = f"{package_dir}/../../{cfg.executable} --nevents={cfg.nevents_per_job} --seed={cfg.seed} " \
-                f"--pTHatMin={slice_min} --pTHatMax={slice_max} " \
-                f"--output={outdir}/generate --recoJetPtMin={cfg.reco_jet_pt_min}"
+    # Check whether the generation needs to be done.
+    run_generation = False
+    output_files = [
+        f"{outdir}/generate.hepmc3",
+        f"{outdir}/generate.txt",
+        f"{outdir}/generate_metadata.txt",
+    ]
+    for file_name in output_files:
+        if not os.path.exists(file_name):
+            run_generation = True
+            logger.info(f"File {file_name} does not exist. Generation will be performed.")
 
-    # Execute the command in the shell.
-    logger.info(f"Running command: {command}")
-    exit_code = os.system(command)
+    # Log that no generation takes place if run_generation == False:
+    if not run_generation:
+        for file_name in output_files:
+            logger.info(f"File {file_name} already exists.")
+        logger.info("No generation needed.")
 
-    # Throw an error if the command failed.
-    if exit_code != 0:
-        logger.error(f"Event generation failed with exit code {exit_code}.")
-        raise RuntimeError(f"Event generation failed with exit code {exit_code}.")
-    
+    else:
+        # Run the generation.
+        logger.info("Generating events...")
+
+        # Prepare the command to run Pythia.
+        package_dir = os.path.dirname(os.path.abspath(qgpy.__file__))
+        command = f"{package_dir}/../../{cfg.executable} --nevents={cfg.nevents_per_job} --seed={cfg.seed} " \
+                    f"--pTHatMin={slice_min} --pTHatMax={slice_max} " \
+                    f"--output={outdir}/generate --recoJetPtMin={cfg.reco_jet_pt_min}"
+
+        # Execute the command in the shell.
+        logger.info(f"Running command: {command}")
+        exit_code = os.system(command)
+
+        # Throw an error if the command failed.
+        if exit_code != 0:
+            logger.error(f"Event generation failed with exit code {exit_code}.")
+            raise RuntimeError(f"Event generation failed with exit code {exit_code}.")
+        
+    # Final log message.
+    logger.info("At the end of the generate_pythia function.")
+
     # Return.
     return

@@ -189,6 +189,7 @@ def run_job(
         delphes_card: str,
         slice_min: float = -1,
         slice_max: float = -1,
+        copy_output_on_exit: bool = False,
         ) -> None:
     """
     Run the job with the given configuration.
@@ -212,13 +213,6 @@ def run_job(
     logger = qgpy.utils.create_logger(job_name, outdir = job_dir)
     logger.info("Beginning of the run_job function...")
 
-    # # Save the generator config and the slice min/max values in a dictionary.
-    # with open(f"{job_dir}/job_config.pkl", "wb") as f:
-    #     pickle.dump({
-    #         "generator_config": cfg,
-    #         "slice_min": slice_min,
-    #         "slice_max": slice_max
-    #     }, f)
 
     # Get the generate function to call.
     logger.info(f"Getting the {cfg.function} function from the qgpy.generate module...")
@@ -233,19 +227,32 @@ def run_job(
         slice_max=slice_max
     )
 
-    # Run Delphes on the hepmc3 file.
-    package_dir = os.path.dirname(os.path.abspath(qgpy.__file__))
-    logger.info(f"Running Delphes on the generated HepMC3 file using the {package_dir}/../../{delphes_card} card.")
-    os.system(f'DelphesHepMC3 {package_dir}/../../{delphes_card} {job_dir}/delphes.root {job_dir}/generate.hepmc3')
 
-    # Convert the Delphes root format to the JIDENN accepted root format.
-    qgpy.convert.delphes_to_jidenn_root(
-        delphes_file=f"{job_dir}/delphes.root",
-        jidenn_file=f"{job_dir}/jidenn_input.root"
-    )
+    # Run Delphes on the hepmc3 file, unless delphes.root exists.
+    delphes_file = f"{job_dir}/delphes.root"
+    if os.path.exists(delphes_file):
+        logger.info(f"Delphes file {delphes_file} already exists. Skipping Delphes run.")
+    else:
+        package_dir = os.path.dirname(os.path.abspath(qgpy.__file__))
+        logger.info(f"Running Delphes on the generated HepMC3 file using the {package_dir}/../../{delphes_card} card.")
+        logger.info(f"Delphes file will be saved to: {delphes_file}")
+        os.system(f'DelphesHepMC3 {package_dir}/../../{delphes_card} {job_dir}/delphes.root {job_dir}/generate.hepmc3')
 
-    # Read the metadata from the text file created by the generate function.
-    metadata = qgpy.convert(f"{job_dir}/generate_metadata.txt")
+    # # Convert the Delphes root format to the JIDENN accepted root format.
+    # qgpy.convert.delphes_to_jidenn_root(
+    #     delphes_file=f"{job_dir}/delphes.root",
+    #     jidenn_file=f"{job_dir}/jidenn_input.root"
+    # )
+
+
+    # Convert the Delphes root format to the TensorFlow dataset format.
+    dataset_dir = f"{job_dir}/tf_dataset"
+    if not os.path.exists(dataset_dir):
+        qgpy.convert.delphes_to_tf_dataset(
+            job_dir=job_dir,
+            delphes_file=f"{job_dir}/delphes.root",
+            dataset_dir=dataset_dir,
+        )
 
 
 
@@ -258,9 +265,10 @@ def run_job(
     # At the end of the job, copy the directory job_dir to the target_dir,
     # unless job_dir is subdirectory of target_dir.
     # Note: copy the whole directory, not just the contents.
-    if not os.path.commonpath([os.path.abspath(job_dir), os.path.abspath(target_dir)]) == os.path.abspath(target_dir):
-        dest = os.path.join(target_dir, os.path.basename(job_dir))
-        shutil.copytree(job_dir, dest, dirs_exist_ok=True)
+    if copy_output_on_exit:
+        if not os.path.commonpath([os.path.abspath(job_dir), os.path.abspath(target_dir)]) == os.path.abspath(target_dir):
+            dest = os.path.join(target_dir, os.path.basename(job_dir))
+            shutil.copytree(job_dir, dest, dirs_exist_ok=True)
 
     # Return.
     return
