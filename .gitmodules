@@ -4,6 +4,3 @@
 [submodule "IFNPlugin"]
 	path = IFNPlugin
 	url = https://github.com/jetflav/IFNPlugin.git
-[submodule "JIDENN"]
-	path = JIDENN
-	url = https://github.com/jansam123/JIDENN
