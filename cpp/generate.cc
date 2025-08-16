@@ -131,7 +131,7 @@ int main(int argc, char* argv[]) {
     HepMC3::WriterAscii writer(output + ".hepmc3");
 
     ofstream outfile(output + ".txt");
-    outfile << "event_number\tpt\t\tE\t\trap\tphi\tflav\tATLAS_tag\n";
+    outfile << "event_number,pt,E,eta,phi,IFN_label,ATLAS_label\n";
 
     // Jet definition with flavour recombiner
     JetDefinition base_jet_def(antikt_algorithm, 0.4);
@@ -199,20 +199,20 @@ int main(int argc, char* argv[]) {
                 }
             }
 
-            outfile << i + 1 << "\t"
+            outfile << i << ","
                     << fixed << setprecision(3)
-                    << jet.pt()  << "\t"
-                    << jet.e()   << "\t"
-                    << jet.rap() << "\t"
-                    << jet.phi() << "\t"
-                    // << "g: " << FlavHistory::current_flavour_of(jet)[0] << "\t"
-                    // << "d: " << FlavHistory::current_flavour_of(jet)[1] << "\t"
-                    // << "u: " << FlavHistory::current_flavour_of(jet)[2] << "\t"
-                    // << "s: " << FlavHistory::current_flavour_of(jet)[3] << "\t"
-                    // << "c: " << FlavHistory::current_flavour_of(jet)[4] << "\t"
-                    // << "b: " << FlavHistory::current_flavour_of(jet)[5] << "\t"
-                    // << "t: " << FlavHistory::current_flavour_of(jet)[6] << "\t"
-                    << ifn_label << "\t"
+                    << jet.pt()  << ","
+                    << jet.e()   << ","
+                    << jet.eta() << ","
+                    << jet.phi() << ","
+                    // << "g: " << FlavHistory::current_flavour_of(jet)[0] << ","
+                    // << "d: " << FlavHistory::current_flavour_of(jet)[1] << ","
+                    // << "u: " << FlavHistory::current_flavour_of(jet)[2] << ","
+                    // << "s: " << FlavHistory::current_flavour_of(jet)[3] << ","
+                    // << "c: " << FlavHistory::current_flavour_of(jet)[4] << ","
+                    // << "b: " << FlavHistory::current_flavour_of(jet)[5] << ","
+                    // << "t: " << FlavHistory::current_flavour_of(jet)[6] << ","
+                    << ifn_label << ","
                     << atlas_label << "\n";
         }
     }

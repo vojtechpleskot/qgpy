@@ -247,10 +247,14 @@ def run_job(
 
     # Convert the Delphes root format to the TensorFlow dataset format.
     dataset_dir = f"{job_dir}/tf_dataset"
-    if not os.path.exists(dataset_dir):
+    if os.path.exists(dataset_dir):
+        logger.info(f"TensorFlow dataset directory {dataset_dir} already exists. Skipping conversion.")
+    else:
+        logger.info(f"Converting the Delphes root file to the TensorFlow dataset format.")
         qgpy.convert.delphes_to_tf_dataset(
             job_dir=job_dir,
             delphes_file=f"{job_dir}/delphes.root",
+            labels_file=f"{job_dir}/generate.txt",
             dataset_dir=dataset_dir,
         )
 

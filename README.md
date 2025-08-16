@@ -1,6 +1,8 @@
 # qgpy
 Python package to generate MC events and prepare them in a format useful for AI training.
 
+ALL INSTRUCTION ARE GIVEN FOR RUNNING JUST ON THE CHIMERA CLUSTER, FOR THE MOMENT.
+
 # Installation
 ```bash
 git clone https://github.com/yourusername/qgpy.git
@@ -51,4 +53,50 @@ Make sure to recompile the C++ code:
 cd cpp
 g++ generate.cc -o generate -L/cvmfs/sft.cern.ch/lcg/views/LCG_108/x86_64-el9-gcc15-opt/lib -lpythia8 -lfastjet -L/cvmfs/sft.cern.ch/lcg/views/LCG_108/x86_64-el9-gcc15-opt/lib64/ -lHepMC3 -L../IFNPlugin/ -lIFNPlugin -I../cxxopts/include/
 cd ..
+```
+
+# Configuration
+The configuration is done with the `qgpy/yaml_config/config.yaml` file.
+The file is processed with the [Hydra](https://hydra.cc/docs/intro/) framework, which allows for easy configuration management and overrides from the command line.
+Just very briefly:
+- Check which parameter you want to change. All parameters are in the dataclasses defined in `qgpy/configuration.py`.
+- To change e.g. 
+
+# JIDENN
+This package is a framework for training neural networks on jet data, particularly focusing on the use of quark-gluon jet tagging.
+It provides a variety of neural network architectures and utilities for data preprocessing, training, and evaluation.
+The package is [here]()
+
+## Installation
+To install the package, clone the repository, run the tensorflow container, create the python virtual environment, and install the requirements:
+```bash
+git clone https://github.com/jansam123/JIDENN.git
+cd JIDENN
+apptainer run --bind=/home --bind=/work --bind=/scratch --bind /singularity/ucjf:/singularity_ucjf --nv /home/jankovys/tensorflow_latest-gpu.sif
+python -m venv venv
+source venv/bin/activate
+pip install -r /home/plesv6am/qg/JIDENN/requirements.txt
+```
+
+## On the next startup
+Make sure to activate the environment again:
+```bash
+cd <path_to_the_JIDENN_directory>
+apptainer run --bind=/home --bind=/work --bind=/scratch --bind /singularity/ucjf:/singularity_ucjf --nv /home/jankovys/tensorflow_latest-gpu.sif
+source venv/bin/activate
+```
+
+## How to use JIDENN using qgpy-generated data
+1. Generate the data using the `qgpy` package as described in the qgpy documentation above.
+2. Open new interactive job.
+3. Setup the environment, see [above](#on-the-next-startup).
+4. Flatten the data spectrum. Run a command similar to:
+```bash
+python scripts/flatten_spectrum.py --load_path /scratch/ucjf-atlas/plesv6am/qg/data/slice0_0/tf_dataset /scratch/ucjf-atlas/plesv6am/qg/data/slice0_1/tf_dataset /scratch/ucjf-atlas/plesv6am/qg/data/slice0_2/tf_dataset /scratch/ucjf-atlas/plesv6am/qg/data/slice0_3/tf_dataset /scratch/ucjf-atlas/plesv6am/qg/data/slice0_4/tf_dataset /scratch/ucjf-atlas/plesv6am/qg/data/slice0_5/tf_dataset /scratch/ucjf-atlas/plesv6am/qg/data/slice0_6/tf_dataset /scratch/ucjf-atlas/plesv6am/qg/data/slice0_7/tf_dataset /scratch/ucjf-atlas/plesv6am/qg/data/slice0_8/tf_dataset /scratch/ucjf-atlas/plesv6am/qg/data/slice0_9/tf_dataset --save_path /scratch/ucjf-atlas/plesv6am/qg/tf_dataset_flatten --flat_var_lower_limit 1000 --flat_var_upper_limit 1500 --pt_lower_cut 1000 --pt_upper_cut 1500
+```
+5. Create and/or edit the `jidenn/yaml_config/config_test.yaml` file. The file `/home/plesv6am/qg/JIDENN/jidenn/yaml_config/config_test.yaml` should work - you can use it as a template; copy it to `jidenn/yaml_config/`.
+   - Make sure to set the `data.path`, `data.dev_path`, and `test_data.path` to the path where you saved the flattened data.
+6. Start the training with the `jidenn/train.py` script:
+```bash
+python train.py --config-name config_test
 ```
