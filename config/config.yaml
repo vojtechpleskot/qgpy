@@ -12,7 +12,7 @@ pythia:
 slicing:
   slices_min: [1000]
   slices_max: [1500]
-  njobs: [50]
+  njobs: [10]
 
 submit:
   scheduler: slurm
