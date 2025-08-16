@@ -93,7 +93,7 @@ source venv/bin/activate
 ## How to use JIDENN using qgpy-generated data
 1. Generate the data using the `qgpy` package as described in the qgpy documentation above.
 2. Open new interactive job.
-3. Setup the environment, see [above](#on-the-next-startup-2).
+3. Setup the environment, see [above](#on-the-next-startup-1).
 4. Flatten the data spectrum. Run a command similar to:
 ```bash
 python scripts/flatten_spectrum.py --load_path /scratch/ucjf-atlas/plesv6am/qg/data/slice0_0/tf_dataset /scratch/ucjf-atlas/plesv6am/qg/data/slice0_1/tf_dataset /scratch/ucjf-atlas/plesv6am/qg/data/slice0_2/tf_dataset /scratch/ucjf-atlas/plesv6am/qg/data/slice0_3/tf_dataset /scratch/ucjf-atlas/plesv6am/qg/data/slice0_4/tf_dataset /scratch/ucjf-atlas/plesv6am/qg/data/slice0_5/tf_dataset /scratch/ucjf-atlas/plesv6am/qg/data/slice0_6/tf_dataset /scratch/ucjf-atlas/plesv6am/qg/data/slice0_7/tf_dataset /scratch/ucjf-atlas/plesv6am/qg/data/slice0_8/tf_dataset /scratch/ucjf-atlas/plesv6am/qg/data/slice0_9/tf_dataset --save_path /scratch/ucjf-atlas/plesv6am/qg/tf_dataset_flatten --flat_var_lower_limit 1000 --flat_var_upper_limit 1500 --pt_lower_cut 1000 --pt_upper_cut 1500
