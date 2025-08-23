@@ -8,6 +8,8 @@ ALL INSTRUCTION ARE GIVEN FOR RUNNING JUST ON THE CHIMERA CLUSTER, FOR THE MOMEN
 ## Download the repository
 ```bash
 git clone https://github.com/vojtechpleskot/qgpy.git
+cd qgpy/
+git submodule update --init --recursive
 ```
 Even better, you can fork the repository into your GitHub account and clone your forked repository.
 
@@ -69,17 +71,17 @@ Just very briefly:
 # JIDENN
 This package is a framework for training neural networks on jet data, particularly focusing on the use of quark-gluon jet tagging.
 It provides a variety of neural network architectures and utilities for data preprocessing, training, and evaluation.
-The package is [here](https://github.com/jansam123/JIDENN.git)
+The package is [here](https://github.com/vojtechpleskot/JIDENN.git)
 
 ## Installation
 To install the package, clone the repository, run the tensorflow container, create the python virtual environment, and install the requirements:
 ```bash
-git clone https://github.com/jansam123/JIDENN.git
+git clone https://github.com/vojtechpleskot/JIDENN.git
 cd JIDENN
 apptainer run --bind=/home --bind=/work --bind=/scratch --bind /singularity/ucjf:/singularity_ucjf --nv /home/jankovys/tensorflow_latest-gpu.sif
 python -m venv venv
 source venv/bin/activate
-pip install -r /home/plesv6am/qg/JIDENN/requirements.txt
+pip install -r requirements.txt
 ```
 
 ## On the next startup
