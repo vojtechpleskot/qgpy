@@ -3,7 +3,7 @@ defaults:
   - _self_
 
 general:
-  run_dir: "/scratch/ucjf-atlas/plesv6am/qg/data/"
+  run_dir: "/scratch/ucjf-atlas/berkato1/qg/runs"  # Base directory for all runs.
   erase_existing: false
 
 pythia:
@@ -12,7 +12,7 @@ pythia:
 slicing:
   slices_min: [1000]
   slices_max: [1500]
-  njobs: [10]
+  njobs: [50]
 
 submit:
   scheduler: slurm

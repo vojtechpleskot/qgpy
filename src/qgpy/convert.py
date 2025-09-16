@@ -288,6 +288,145 @@ def delphes_to_tf_dataset(job_dir: str, delphes_file: str, labels_file: str, dat
     # Return.
     return
 
+
+def delphes_to_tf_dataset_global_vars(job_dir: str, delphes_file: str, labels_file: str, dataset_dir: str) -> None:
+
+    # Create a logger instance.
+    outdir = delphes_file.rsplit('/', 1)[0]
+    logger = qgpy.utils.create_logger('convert', outdir = outdir)
+    logger.info("Starting the Delphes to JIDENN conversion...")
+        
+    # Read the parton jets from the text file.
+    logger.info(f"Reading parton jets from the file: {labels_file}")
+    parton_jets = read_parton_jets(labels_file)
+
+    # Create a dictionary to store the jet properties.
+    store = {v: [] for v in ['jets_ifn_label', 'jets_atlas_label']}
+
+    # Open the ROOT file.
+    logger.info(f"Opening the Delphes root file: {delphes_file}")
+    with uproot.open(delphes_file) as file:
+
+        # Access the TTree named "Delphes"
+        tree = file["Delphes"]
+
+        # List all keys in the root file
+        keys = tree.keys()
+        logger.debug("Keys in the root file:")
+        for key in keys:
+            logger.debug(f'{key}, {type(tree[key])}')
+
+        # Read the global jet variables.
+        logger.info("Reading global jet variables...")
+        store['jets_pt'] = tree["Jet/Jet.PT"].array()
+        store['jets_eta'] = tree["Jet/Jet.Eta"].array()
+        store['jets_phi'] = tree["Jet/Jet.Phi"].array()
+
+        # Calculate the jet energy from pt, eta, phi, and mass.
+        jet_mass = tree["Jet/Jet.Mass"].array()
+        total_momentum = store['jets_pt'] * np.cosh(store['jets_eta'])
+        store['jets_energy'] = ak.Array(np.sqrt(total_momentum**2 + jet_mass**2))
+
+        # The flavor label evaluated by Delphes.        
+        store['jets_delphes_label'] = ak.values_astype(tree["Jet/Jet.Flavor"].array(), 'int32')
+        store['jets_PartonTruthLabelID'] = store['jets_delphes_label']
+
+        # -----------------------------------------------------        
+        # -----------------------------------------------------
+        # ----- This is not really needed in this function
+
+        # Extract the jet_tau<x> values.
+        jet_tau = tree["Jet/Jet.Tau[5]"].array()
+        # From the last dimension of the jet_tau array, extract the first element.
+        for i in [1, 2, 3, 4]:
+            store[f'jets_tau{i}'] = jet_tau[..., i]
+
+        # Extract the number of particles in a jet.
+        store['jets_nparticles'] = tree["Jet/Jet.NCharged"].array() + tree["Jet/Jet.NNeutrals"].array()
+
+        # Copy the array store['jets_pt'] and fill the copy with zeros.
+        store['jets_sdmass'] = ak.zeros_like(store['jets_pt'])
+
+        # ----- End of the not needed part
+        # -----------------------------------------------------        
+        # -----------------------------------------------------        
+
+        # Number of events in the root file.
+        nevents = len(jet_mass)
+        logger.info(f"Number of events in the root file: {nevents}")
+
+        # Loop over all events in the root file.
+        for i_evt in range(nevents):
+            # Print the progress every 10 events.
+            if i_evt % 100 == 0:
+                logger.info(f"Processing event {i_evt} of {nevents}")
+
+            # Create a dictionary to store the jet properties for the current event.
+            event_store = {v: [] for v in ['jets_ifn_label', 'jets_atlas_label']}
+
+            njets = len(jet_mass[i_evt])
+            logger.debug(f"Number of jets in the event {i_evt}: {njets}")
+
+            # Loop over jets in the event.
+            for i_jet in range(njets):
+
+                # Map the reco jet to a parton jet, based on the proximity in the eta-phi space.
+                # The reco jet is matched to the closest parton jet if their Delta_R < 0.4.
+                # Read the IFN and ATLAS labels from the matched parton jet and append them to the event store.
+                # Use the -1 code to indicate that there is no matching parton jet for a given reco jet.
+                parton_jet_index = dr_matching(
+                    reco_jet_eta = store['jets_eta'][i_evt][i_jet],
+                    reco_jet_phi = store['jets_phi'][i_evt][i_jet],
+                    parton_jets_eta = parton_jets['eta'][i_evt],
+                    parton_jets_phi = parton_jets['phi'][i_evt],
+                )
+                if parton_jet_index >= 0:
+                    ifn_label = parton_jets['IFN_label'][i_evt][parton_jet_index]
+                    atlas_label = parton_jets['ATLAS_label'][i_evt][parton_jet_index]
+                    logger.debug(f"Event: {i_evt}, Reco jet: {i_jet}")
+                    logger.debug(f"Matched parton jet index: {parton_jet_index}, IFN label: {ifn_label}, ATLAS label: {atlas_label}")
+                    logger.debug(f"Parton jet eta: {parton_jets['eta'][i_evt][parton_jet_index]}, phi: {parton_jets['phi'][i_evt][parton_jet_index]}")
+                    logger.debug(f"Reco jet eta: {store['jets_eta'][i_evt][i_jet]}, phi: {store['jets_phi'][i_evt][i_jet]}")
+                    logger.debug(f"Parton jet pt: {parton_jets['pt'][i_evt][parton_jet_index]}")
+                    logger.debug(f"Reco jet pt: {store['jets_pt'][i_evt][i_jet]}")
+
+                else:
+                    ifn_label = -1
+                    atlas_label = -1
+                event_store['jets_ifn_label'].append(ifn_label)
+                event_store['jets_atlas_label'].append(atlas_label)
+        
+            # Append the event store to the main store.
+            for v in ['jets_ifn_label', 'jets_atlas_label']:
+                store[v].append(event_store[v])
+
+
+    # Convert each list in store to the awkward array.
+    for v in ['jets_ifn_label', 'jets_atlas_label']:
+        store[v] = ak.Array(store[v])
+
+    # Convert each awkward array to a tensor.
+    # tensors = {v: awkward_to_tensor(array) for v, array in store.items()}
+    tensors = {v: ak.to_raggedtensor(array) for v, array in store.items()}
+
+    # Create a TensorFlow dataset from the tensors.
+    dataset = tf.data.Dataset.from_tensor_slices(tensors)
+
+    # Save the dataset.
+    dataset.save(dataset_dir, compression='GZIP')
+
+    # Save the element_spec.
+    with open(os.path.join(dataset_dir, 'element_spec.pkl'), 'wb') as f:
+        pickle.dump(dataset.element_spec, f)
+
+    # Read the metadata from the text file created by the generate function and store it in a pickle file.
+    metadata = read_metadata(f"{job_dir}/generate_metadata.txt")
+    with open(os.path.join(dataset_dir, 'metadata.pkl'), 'wb') as f:
+        pickle.dump(metadata, f)
+    
+    # Return.
+    return
+
 def read_metadata(metadata_file: str) -> Dict[str, Any]:
     """
     Read metadata from the text file.

@@ -96,10 +96,13 @@ source venv/bin/activate
 1. Generate the data using the `qgpy` package as described in the qgpy documentation above.
 2. Open new interactive job.
 3. Setup the environment, see [above](#on-the-next-startup-1).
-4. Flatten the data spectrum. Run a command similar to:
+4. Concatenate the tf datasets from qgpy. Also flatten events to jets and flatten the jet spectrum. Run commands similar to:
 ```bash
-python scripts/flatten_spectrum.py --load_path /scratch/ucjf-atlas/plesv6am/qg/data/slice0_0/tf_dataset /scratch/ucjf-atlas/plesv6am/qg/data/slice0_1/tf_dataset /scratch/ucjf-atlas/plesv6am/qg/data/slice0_2/tf_dataset /scratch/ucjf-atlas/plesv6am/qg/data/slice0_3/tf_dataset /scratch/ucjf-atlas/plesv6am/qg/data/slice0_4/tf_dataset /scratch/ucjf-atlas/plesv6am/qg/data/slice0_5/tf_dataset /scratch/ucjf-atlas/plesv6am/qg/data/slice0_6/tf_dataset /scratch/ucjf-atlas/plesv6am/qg/data/slice0_7/tf_dataset /scratch/ucjf-atlas/plesv6am/qg/data/slice0_8/tf_dataset /scratch/ucjf-atlas/plesv6am/qg/data/slice0_9/tf_dataset --save_path /scratch/ucjf-atlas/plesv6am/qg/tf_dataset_flatten --flat_var_lower_limit 1000 --flat_var_upper_limit 1500 --pt_lower_cut 1000 --pt_upper_cut 1500
+d=/scratch/ucjf-atlas/plesv6am/qg/data10  # Path where the qgpy-generated data is stored
+python scripts/combine_files.py --load_path $d --start_identifier slice0_ --save_path $d/tf_dataset_combined
+python scripts/flatten_spectrum.py --load_path $d/tf_dataset_combined/train/ --save_path $d/tf_dataset_flatten --flat_var_lower_limit 1000 --flat_var_upper_limit 1500 --pt_lower_cut 1000 --pt_upper_cut 1500
 ```
+If you have more slices and/or a different slice, update the `--start_identifier` argument and the `pt` boundaries accordingly.
 5. Create and/or edit the `jidenn/yaml_config/config_test.yaml` file. The file `/home/plesv6am/qg/JIDENN/jidenn/yaml_config/config_test.yaml` should work - you can use it as a template; copy it to `jidenn/yaml_config/`.
    - Make sure to set the `data.path`, `data.dev_path`, and `test_data.path` to the path where you saved the flattened data.
 6. Start the training with the `jidenn/train.py` script.
