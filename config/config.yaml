@@ -3,7 +3,7 @@ defaults:
   - _self_
 
 general:
-  run_dir: "/scratch/ucjf-atlas/berkato1/qg/runs"  # Base directory for all runs.
+  run_dir: "/scratch/ucjf-atlas/plesv6am/qg/data11"  # Base directory for all runs.
   erase_existing: false
 
 pythia:

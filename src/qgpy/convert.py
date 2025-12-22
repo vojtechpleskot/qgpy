@@ -132,6 +132,7 @@ def delphes_to_tf_dataset(job_dir: str, delphes_file: str, labels_file: str, dat
         "ParticleFlowCandidate/ParticleFlowCandidate.Eta": "jets_c_eta",
         "ParticleFlowCandidate/ParticleFlowCandidate.Phi": "jets_c_phi",
         "ParticleFlowCandidate/ParticleFlowCandidate.E": "jets_c_e",
+        "ParticleFlowCandidate/ParticleFlowCandidate.Mass": "jets_c_m",
         "ParticleFlowCandidate/ParticleFlowCandidate.Charge": "jets_c_charge",
     }
 
@@ -153,9 +154,10 @@ def delphes_to_tf_dataset(job_dir: str, delphes_file: str, labels_file: str, dat
 
         # Read the global jet variables.
         logger.info("Reading global jet variables...")
-        store['jets_pt'] = tree["Jet/Jet.PT"].array()
+        store['jets_pt']  = tree["Jet/Jet.PT"].array()
         store['jets_eta'] = tree["Jet/Jet.Eta"].array()
         store['jets_phi'] = tree["Jet/Jet.Phi"].array()
+        store['jets_m']   = tree["Jet/Jet.Mass"].array()
 
         # Calculate the jet energy from pt, eta, phi, and mass.
         jet_mass = tree["Jet/Jet.Mass"].array()
