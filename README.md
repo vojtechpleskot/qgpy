@@ -78,38 +78,59 @@ To install the package, clone the repository, run the tensorflow container, crea
 ```bash
 git clone https://github.com/vojtechpleskot/JIDENN.git
 cd JIDENN
-apptainer run --bind=/home --bind=/work --bind=/scratch --bind /singularity/ucjf:/singularity_ucjf --nv /home/jankovys/tensorflow_latest-gpu.sif
+#apptainer run --bind=/home --bind=/work --bind=/scratch --bind /singularity/ucjf:/singularity_ucjf --nv /home/jankovys/tensorflow_latest-gpu.sif
 python -m venv venv
 source venv/bin/activate
-pip install -r requirements.txt
+pip install tensorflow[and-cuda]==2.18.0
+pip install -r requirements_no_version.txt
 ```
 
 ## On the next startup
 Make sure to activate the environment again:
 ```bash
 cd <path_to_the_JIDENN_directory>
-apptainer run --bind=/home --bind=/work --bind=/scratch --bind /singularity/ucjf:/singularity_ucjf --nv /home/jankovys/tensorflow_latest-gpu.sif
+#apptainer run --bind=/home --bind=/work --bind=/scratch --bind /singularity/ucjf:/singularity_ucjf --nv /home/jankovys/tensorflow_latest-gpu.sif
 source venv/bin/activate
 ```
 
 ## How to use JIDENN using qgpy-generated data
+
 1. Generate the data using the `qgpy` package as described in the qgpy documentation above.
+
 2. Open new interactive job.
+
 3. Setup the environment, see [above](#on-the-next-startup-1).
-4. Concatenate the tf datasets from qgpy. Also flatten events to jets and flatten the jet spectrum. Run commands similar to:
+
+4. Concatenate the tf datasets from qgpy. Run commands similar to:
+
 ```bash
-d=/scratch/ucjf-atlas/plesv6am/qg/data10  # Path where the qgpy-generated data is stored
-python scripts/combine_files.py --load_path $d --start_identifier slice0_ --save_path $d/tf_dataset_combined
-python scripts/flatten_spectrum.py --load_path $d/tf_dataset_combined/train/ --save_path $d/tf_dataset_flatten --flat_var_lower_limit 1000 --flat_var_upper_limit 1500 --pt_lower_cut 1000 --pt_upper_cut 1500
+d=/scratch/ucjf-atlas/plesv6am/qg/data21  # Path where the qgpy-generated data is stored
+python scripts/combine_files.py --load_path $d --start_identifier slice --save_path $d/tf_dataset_combined --subdir tf_dataset
 ```
-If you have more slices and/or a different slice, update the `--start_identifier` argument and the `pt` boundaries accordingly.
-5. Create and/or edit the `jidenn/yaml_config/config_test.yaml` file. The file `/home/plesv6am/qg/JIDENN/jidenn/yaml_config/config_test.yaml` should work - you can use it as a template; copy it to `jidenn/yaml_config/`.
+   - `slice` is the beginning of subdirectory names in the directory `$d`.
+   - `tf_dataset` is the name of the subdirectory in each `slice*` directory.
+   - NOTE: The `slice*` and `tf_dataset` names are the `qgpy` package defaults.
+
+5. Flatten the events to jets and flatten the jet spectrum in one go:
+
+```bash
+python scripts/flatten_spectrum.py --load_path $d/tf_dataset_combined/train/ --save_path $d/tf_dataset_flatten --pt_lower_cut 200 --pt_upper_cut 300 --eta_cut 2.1 --flattening_var jets_pt jets_eta --bins 10 10
+```
+   - `--pt_lower_cut` and `--pt_upper_cut` define the pt range of jets to keep.
+   - You can also set the `--eta_cut` parameter to limit the jet absolute eta range. Default is `2.1`.
+   - `--flattening_var` specifies which variables to use for flattening the jet spectrum.
+   - `--bins` specifies the number of bins for each flattening variable.
+   - You might need to run the flattening script multiple times: for the `train/`, `dev/`, and `test/` subdirectories separately.
+
+6. Create and/or edit the `jidenn/yaml_config/config_test.yaml` file. The file `/home/plesv6am/qg/JIDENN/jidenn/yaml_config/config_test.yaml` should work - you can use it as a template; copy it to `jidenn/yaml_config/`.
+
    - Make sure to set the `data.path`, `data.dev_path`, and `test_data.path` to the path where you saved the flattened data.
-6. Start the training with the `jidenn/train.py` script.
+
+7. Start the training with the `jidenn/train.py` script.
 NOTE: You need to run the training script on a node with GPUs, otherwise it will likely not work.
 To log there, start from a clean hpc session, and start the following interactive job:
 ```bash
-srun -p gpu-ffa --gres "mps:10" --mem 50G --cpus-per-task 12 -t 10:00:0 --pty bash -i
+salloc -p gpu-ffa --cpus-per-task 12 --mem 100G --time=12:00:00 --gres=gpu
 ```
 Then, setup the environment as above, and run:
 ```bash

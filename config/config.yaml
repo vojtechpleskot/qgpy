@@ -3,16 +3,19 @@ defaults:
   - _self_
 
 general:
-  run_dir: "/scratch/ucjf-atlas/plesv6am/qg/data11"  # Base directory for all runs.
+  run_dir: "/scratch/ucjf-atlas/plesv6am/qg/data26"  # Base directory for all runs.
   erase_existing: false
 
 pythia:
-  nevents_per_job: 1000
+  nevents_per_job: 20000
 
 slicing:
-  slices_min: [1000]
-  slices_max: [1500]
-  njobs: [50]
+  # slices_min: [200, 220, 240, 260, 280, 300, 320, 340, 360, 380, 400, 420, 440, 460, 480, 500, 520, 540, 560, 580, 600, 620, 640, 660, 680, 700, 720, 740, 760, 780, 800, 820, 840, 860, 880, 900, 920, 940, 960, 980]
+  # slices_max: [220, 240, 260, 280, 300, 320, 340, 360, 380, 400, 420, 440, 460, 480, 500, 520, 540, 560, 580, 600, 620, 640, 660, 680, 700, 720, 740, 760, 780, 800, 820, 840, 860, 880, 900, 920, 940, 960, 980, 1000]
+  # njobs: [20, 20, 20, 20, 20, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 20, 20, 20, 20, 20, 30, 30, 30, 30, 30, 40, 40, 40, 40, 40, 50, 50, 50, 50, 50]
+  slices_min: [200, 220, 240, 260, 280] # /scratch/ucjf-atlas/plesv6am/qg/data22
+  slices_max: [220, 240, 260, 280, 300]
+  njobs: [1, 1, 1, 1, 1]  
 
 submit:
   scheduler: slurm
@@ -20,10 +23,10 @@ submit:
     max_jobs: 2
   slurm:
     command       : sbatch
-    partition     : ffa-preempt
+    partition     : ucjf
     ntasks        : 1
     cpus_per_task : 1
-    mem           : 2G
+    mem           : 4G
     time          : 01:00:00
 
 
