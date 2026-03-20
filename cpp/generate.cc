@@ -64,6 +64,7 @@ int main(int argc, char* argv[]) {
         ("phmax,pTHatMax", "Maximum pT hat for hard processes", cxxopts::value<double>()->default_value("-1."))
         ("o,output", "Output file name", cxxopts::value<std::string>()->default_value("labels"))
         ("r,recoJetPtMin", "Minimum pT for jets", cxxopts::value<double>()->default_value("5.0"))
+        ("p,process", "Process to generate (e.g. 'HardQCD:all')", cxxopts::value<std::string>()->default_value("HardQCD:all"))
         ("h,help", "Print usage")
     ;
 
@@ -81,6 +82,7 @@ int main(int argc, char* argv[]) {
     double pTHatMax = result["pTHatMax"].as<double>();
     std::string output = result["output"].as<std::string>();
     double recoJetPtMin = result["recoJetPtMin"].as<double>();
+    std::string process = result["process"].as<std::string>();
 
     // Print the parsed options
     std::cout << "Parsed options:" << std::endl;
@@ -91,7 +93,7 @@ int main(int argc, char* argv[]) {
     std::cout << "  pTHatMax: " << pTHatMax << std::endl;
     std::cout << "  Output file: " << output << std::endl;
     std::cout << "  Jet pT min: " << recoJetPtMin << std::endl;
-
+    std::cout << "  Process: " << process << std::endl;
     // Create Pythia instance
     Pythia pythia;
 
@@ -108,7 +110,7 @@ int main(int argc, char* argv[]) {
     pythia.readString("Beams:eCM = 13600");
 
     // Enable hard QCD processes
-    pythia.readString("HardQCD:all = on");
+    pythia.readString(process + " = on");
     if (pTHatMin > 0) {
         pythia.readString("PhaseSpace:pTHatMin = " + std::to_string(pTHatMin));
     }

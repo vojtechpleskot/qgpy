@@ -81,6 +81,7 @@ class PythiaConfig(GeneratorConfig):
     executable : str            = field(default = "cpp/generate")
     function   : str            = field(default = "generate_pythia")
     seed       : int            = field(default = 0)
+    process    : str            = field(default = "HardQCD:all")
 
 @dataclass
 class SlicingConfig:

@@ -72,7 +72,8 @@ def generate_pythia(
         package_dir = os.path.dirname(os.path.abspath(qgpy.__file__))
         command = f"{package_dir}/../../{cfg.executable} --nevents={cfg.nevents_per_job} --seed={cfg.seed} " \
                     f"--pTHatMin={slice_min} --pTHatMax={slice_max} " \
-                    f"--output={outdir}/generate --recoJetPtMin={cfg.reco_jet_pt_min}"
+                    f"--output={outdir}/generate --recoJetPtMin={cfg.reco_jet_pt_min} " \
+                    f"--process={cfg.process}"
 
         # Execute the command in the shell.
         logger.info(f"Running command: {command}")
