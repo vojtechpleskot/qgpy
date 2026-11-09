@@ -4,6 +4,7 @@
 #include <vector>
 #include <iomanip>
 #include <string>
+#include <sstream>
 #include "cxxopts.hpp" // Assuming you have this file
 
 #include "fastjet/ClusterSequence.hh"
@@ -65,6 +66,7 @@ int main(int argc, char* argv[]) {
         ("o,output", "Output file name", cxxopts::value<std::string>()->default_value("labels"))
         ("r,recoJetPtMin", "Minimum pT for jets", cxxopts::value<double>()->default_value("5.0"))
         ("p,process", "Process to generate (e.g. 'HardQCD:all')", cxxopts::value<std::string>()->default_value("HardQCD:all"))
+        ("oo,other", "Other options for Pythia; comma-separated.", cxxopts::value<std::string>()->default_value(""))
         ("h,help", "Print usage")
     ;
 
@@ -83,7 +85,15 @@ int main(int argc, char* argv[]) {
     std::string output = result["output"].as<std::string>();
     double recoJetPtMin = result["recoJetPtMin"].as<double>();
     std::string process = result["process"].as<std::string>();
-
+    std::string options_tmp = result["other"].as<std::string>();
+    std::vector<std::string> other_options;
+    if (!options_tmp.empty()) {
+        std::stringstream ss(options_tmp);
+        std::string item;
+        while (std::getline(ss, item, ',')) {
+            other_options.push_back(item);
+        }
+    }
     // Print the parsed options
     std::cout << "Parsed options:" << std::endl;
     std::cout << "  Compare: " << (compare ? "true" : "false") << std::endl;
@@ -94,6 +104,11 @@ int main(int argc, char* argv[]) {
     std::cout << "  Output file: " << output << std::endl;
     std::cout << "  Jet pT min: " << recoJetPtMin << std::endl;
     std::cout << "  Process: " << process << std::endl;
+    std::cout << "  Other options: ";
+    for (const auto& option : other_options) {
+        std::cout << option << " ";
+    }
+    std::cout << std::endl;
     // Create Pythia instance
     Pythia pythia;
 
@@ -107,7 +122,7 @@ int main(int argc, char* argv[]) {
     // Proton-proton collisions
     pythia.readString("Beams:idA = 2212");
     pythia.readString("Beams:idB = 2212");
-    pythia.readString("Beams:eCM = 13600");
+    pythia.readString("Beams:eCM = 13000");
 
     // Enable hard QCD processes
     pythia.readString(process + " = on");
@@ -116,6 +131,11 @@ int main(int argc, char* argv[]) {
     }
     if (pTHatMax > 0) {
         pythia.readString("PhaseSpace:pTHatMax = " + std::to_string(pTHatMax));
+    }
+
+    // Apply other options for Pythia
+    for (const auto& option : other_options) {
+        pythia.readString(option);
     }
 
     // Turn ON hadronization and parton-level evolution

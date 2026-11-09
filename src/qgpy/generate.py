@@ -73,7 +73,10 @@ def generate_pythia(
         command = f"{package_dir}/../../{cfg.executable} --nevents={cfg.nevents_per_job} --seed={cfg.seed} " \
                     f"--pTHatMin={slice_min} --pTHatMax={slice_max} " \
                     f"--output={outdir}/generate --recoJetPtMin={cfg.reco_jet_pt_min} " \
-                    f"--process={cfg.process}"
+                    f"--process={cfg.process} " \
+                    f"--other=\"{','.join(cfg.other_options)}\""
+        print(f"Command to run: {command}")
+        print(f"other options: {cfg.other_options}")
 
         # Execute the command in the shell.
         logger.info(f"Running command: {command}")

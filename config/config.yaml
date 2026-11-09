@@ -3,20 +3,27 @@ defaults:
   - _self_
 
 general:
-  run_dir: "/scratch/ucjf-atlas/plesv6am/qg/data26"  # Base directory for all runs.
+  run_dir: "/scratch/ucjf-atlas/plesv6am/excnu_gamma/data9"  # Base directory for all runs.
   erase_existing: false
+  delphes_card: "config/delphes_card_CMS.tcl"
 
 pythia:
-  nevents_per_job: 20000
-  process: "HardQCD:all"  # Pythia process to generate (e.g. 'HardQCD:all', 'WeakBosonAndParton:qqbar2gmZg', 'WeakBosonAndParton:qg2gmZq', etc.)
+  nevents_per_job: 2000
+  process: "ExcitedFermion:qqbar2nueStarnue"  # ExcitedFermion:qqbar2nueStarnue ExcitedFermion:qqbar2nueStarnueStar
+  # turn the decay exc_nu -> nu + gamma on: pythia.readString("4000012:addChannel = 1 0.0 0 22 12");
+  other_options: [
+    '4000012:addChannel = 1 0.0 0 22 12',
+    '4000012:m0 = 2000.0',
+    'ExcitedFermion:Lambda = 10000.0',
+    'ExcitedFermion:coupF = 0.0']  # Other options for Pythia; comma-separated.
 
 slicing:
   # slices_min: [200, 220, 240, 260, 280, 300, 320, 340, 360, 380, 400, 420, 440, 460, 480, 500, 520, 540, 560, 580, 600, 620, 640, 660, 680, 700, 720, 740, 760, 780, 800, 820, 840, 860, 880, 900, 920, 940, 960, 980]
   # slices_max: [220, 240, 260, 280, 300, 320, 340, 360, 380, 400, 420, 440, 460, 480, 500, 520, 540, 560, 580, 600, 620, 640, 660, 680, 700, 720, 740, 760, 780, 800, 820, 840, 860, 880, 900, 920, 940, 960, 980, 1000]
   # njobs: [20, 20, 20, 20, 20, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 20, 20, 20, 20, 20, 30, 30, 30, 30, 30, 40, 40, 40, 40, 40, 50, 50, 50, 50, 50]
-  slices_min: [200, 220, 240, 260, 280] # /scratch/ucjf-atlas/plesv6am/qg/data22
-  slices_max: [220, 240, 260, 280, 300]
-  njobs: [1, 1, 1, 1, 1]  
+  slices_min: [-1]
+  slices_max: [-1]
+  njobs: [50]
 
 submit:
   scheduler: slurm
